@@ -20,7 +20,11 @@ The binary lands at `target/release/fern-lang`.
 
 ```
 cargo run -- examples/area.fern
+cargo run -- examples/area.fern --opt
 ```
+
+`--opt` runs the full pipeline: fold, then dead code elimination, which
+drops the constants folding leaves without users and renumbers what is left.
 
 The driver prints the module, runs `fold_constants`, and prints the result:
 
@@ -60,17 +64,20 @@ let (folded, count) = fern_lang::fold_text(module_text)?;
 - One forward sweep reaches the fixpoint: the IR is SSA, so a definition can
   never be refined after its last use.
 
-Nothing removes the now-dead constants, so index stability is preserved and
-the output stays diffable against the input.
+The fold pass alone leaves dead constants in place so indices stay stable and
+outputs stay diffable; `--opt` ends with `opt::dce`, which renumbers.
 
 ## Layout
 
 ```
 src/ir.rs        IR types, textual parser and printer
 src/fold.rs      the folding pass and its unit tests
-src/lib.rs       crate root, `fold_text` helper
+src/opt/dce.rs   dead code elimination with renumbering
+src/opt/mod.rs   pipeline and its report
+src/lib.rs       crate root, `fold_text` and `optimize_text` helpers
 src/main.rs      CLI driver
 tests/fold.rs    end-to-end folding cases
+tests/dce.rs     end-to-end pipeline cases
 examples/        sample modules
 ```
 

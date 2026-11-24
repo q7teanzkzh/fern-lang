@@ -6,6 +6,7 @@
 
 pub mod fold;
 pub mod ir;
+pub mod opt;
 
 use ir::{Function, ParseError};
 
@@ -15,4 +16,12 @@ pub fn fold_text(text: &str) -> Result<(String, usize), ParseError> {
     let mut function = Function::parse(text)?;
     let folded = fold::fold_constants(&mut function);
     Ok((function.to_text(), folded))
+}
+
+/// Parse `text`, run the full [`opt::optimize`] pipeline, and return the
+/// rewritten module plus its [`opt::Report`].
+pub fn optimize_text(text: &str) -> Result<(String, opt::Report), ParseError> {
+    let mut function = Function::parse(text)?;
+    let report = opt::optimize(&mut function);
+    Ok((function.to_text(), report))
 }
